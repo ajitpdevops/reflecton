@@ -3,18 +3,31 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/whoajitpatil/reflecton/pkg/config"
 	"github.com/whoajitpatil/reflecton/pkg/handlers"
 	"github.com/whoajitpatil/reflecton/pkg/render"
 )
 
 var portNumber = ":8080"
+//  app variable set to type AppConfig in global configuration
+var app config.AppConfig
+var session *scs.SessionManager
 
 func main() {
+	// Change this true when in Production
+	app.InProduction = false
 
-	//  app variable set to type AppConfig in global configuration
-	var app config.AppConfig
+	// Creating a session and setting a timeout 
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.InProduction
+
+	app.Session = session
 
 	// calling CreateTemplateCache method from main
 	tc, err := render.CreateTemplateCache()

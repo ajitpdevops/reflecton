@@ -7,22 +7,28 @@ import (
 	"github.com/justinas/nosurf"
 )
 
+// WriteToConsole - print to console at every request
 func WriteToConsole(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hit the page")
 		next.ServeHTTP(w, r)
 	})
 }
 
-// NoSurf - Creating a middleware using third party library
-func NoSurf(next http.Handler) http.Handler{
+// NoSurf - adds SCRF protection to all POST requests
+func NoSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,
-		Path: "/",
-		Secure: false,
+		Path:     "/",
+		Secure:   app.InProduction,
 		SameSite: http.SameSiteLaxMode,
 	})
 	return csrfHandler
+}
+
+// SessionLoad loads and saves the session on every request
+func SessionLoad(next http.Handler) http.Handler {
+	return session.LoadAndSave(next)
 }
