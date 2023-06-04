@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"github.com/whoajitpatil/reflecton/pkg/config"
+	"github.com/whoajitpatil/reflecton/pkg/models"
 )
-
 
 var app *config.AppConfig
 
@@ -18,17 +18,32 @@ func NewTemplates(a *config.AppConfig) {
 	app = a
 }
 
+// AddDefaultData : Adds a default data for all handlers
+func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+	return td
+}
+
 // RenderTemplates renders templates using html/template
-func RenderTemplate(w http.ResponseWriter, tmpl string) {
-	tc := app.TemplateCache
-	
+func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
+
+	var tc map[string]*template.Template
+
+	if app.UseCache {
+		tc = app.TemplateCache
+	} else {
+		tc, _ = CreateTemplateCache()
+	}
+
 	// Get requested template from cache
 	t, ok := tc[tmpl]
 	if !ok {
 		log.Fatal("Coule not get the template from TC")
 	}
 	buf := new(bytes.Buffer)
-	err := t.Execute(buf, nil)
+	
+	td = AddDefaultData(td)
+	
+	err := t.Execute(buf, td)
 	if err != nil {
 		log.Println(err)
 	}
@@ -50,8 +65,6 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 
 	for _, page := range pages {
 		name := filepath.Base(page)
-		log.Println("Page is currently", page)
-		log.Println("Name is currently", name)
 		ts, err := template.New(name).ParseFiles(page)
 		if err != nil {
 			return myCache, err

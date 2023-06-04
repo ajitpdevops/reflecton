@@ -16,22 +16,32 @@ func main() {
 	//  app variable set to type AppConfig in global configuration
 	var app config.AppConfig
 
-	// calling CreateTemplateCache method from main 
+	// calling CreateTemplateCache method from main
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("Cannot create template cache")
 	}
 	// Assigning the returned templates to app.TemplateCache global variable
 	app.TemplateCache = tc
+	// UseCache in Global Reference
+	app.UseCache = false
 
-	// Call new template chache 
+	repo := handlers.NewRepo(&app)
+	handlers.NewHandlers(repo)
+
+	// Call new template chache
 	render.NewTemplates(&app)
 
-	// Calling the handler functions 
-	http.HandleFunc("/", handlers.Home)
-	http.HandleFunc("/about", handlers.About)
-
 	// Starting the web server
-	log.Printf("Starting a web server on %s\n", portNumber)
-	_ = http.ListenAndServe(portNumber, nil)
+	log.Printf("Starting application server on %s\n", portNumber)
+
+	srv := &http.Server {
+		Addr: portNumber,
+		Handler: routes(&app),
+	}
+
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
