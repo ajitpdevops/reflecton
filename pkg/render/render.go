@@ -2,29 +2,33 @@ package render
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/whoajitpatil/reflecton/pkg/config"
 )
 
+
+var app *config.AppConfig
+
+// NewTemplates : Sets the config for the template package
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
+
 // RenderTemplates renders templates using html/template
-
-func RenderTemplates(w http.ResponseWriter, tmpl string) {
-	// Create template cache
-	tc, err := createTemplateCache()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func RenderTemplate(w http.ResponseWriter, tmpl string) {
+	tc := app.TemplateCache
+	
 	// Get requested template from cache
 	t, ok := tc[tmpl]
 	if !ok {
-		log.Fatal(err)
+		log.Fatal("Coule not get the template from TC")
 	}
 	buf := new(bytes.Buffer)
-	err = t.Execute(buf, nil)
+	err := t.Execute(buf, nil)
 	if err != nil {
 		log.Println(err)
 	}
@@ -36,7 +40,7 @@ func RenderTemplates(w http.ResponseWriter, tmpl string) {
 	}
 }
 
-func createTemplateCache() (map[string]*template.Template, error) {
+func CreateTemplateCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 	pages, err := filepath.Glob("./templates/*.page.tmpl")
 
@@ -46,8 +50,8 @@ func createTemplateCache() (map[string]*template.Template, error) {
 
 	for _, page := range pages {
 		name := filepath.Base(page)
-		fmt.Println("Page is currently", page)
-		fmt.Println("Name is currently", name)
+		log.Println("Page is currently", page)
+		log.Println("Name is currently", name)
 		ts, err := template.New(name).ParseFiles(page)
 		if err != nil {
 			return myCache, err
